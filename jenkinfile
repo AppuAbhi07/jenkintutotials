@@ -1,0 +1,38 @@
+pipeline {
+    agent any
+
+    tools {
+        maven 'maven'
+    }
+
+    stages {
+        stage('Build Maven') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/AppuAbhi07/jenkintutotials.git']]
+                ])
+                sh 'mvn clean install'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -t abhishekvt/piplelinedemo .'
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([string(credentialsId: 'docker_pwd', variable: 'docker_pwd')]) {
+                    sh 'docker login -u abhishekvt -p $docker_pwd'
+                    sh 'docker push abhishekvt/piplelinedemo'
+                }
+            }
+        }
+    }
+}
